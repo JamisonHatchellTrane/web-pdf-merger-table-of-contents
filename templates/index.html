@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bindery — merge PDFs into one</title>
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="masthead-mark" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M8 4h14l6 6v20a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="var(--gold)" stroke-width="1.5"/>
+        <path d="M22 4v6h6" stroke="var(--gold)" stroke-width="1.5"/>
+        <path d="M11 17h12M11 21h12M11 25h7" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="masthead-text">
+      <h1>Bindery</h1>
+      <p>Gather PDFs, put them in order, and bind them into one document — with a table of contents and numbered pages.</p>
+    </div>
+    <div class="masthead-rule"></div>
+  </header>
+
+  <main class="workspace">
+
+    <div id="banner" class="banner" role="alert" hidden></div>
+
+    <section class="intake" aria-label="Add PDFs">
+      <button type="button" class="btn btn-primary" id="btn-add-files">
+        <span class="btn-icon">＋</span> Add local files
+      </button>
+      <button type="button" class="btn btn-ghost" id="btn-add-url">
+        <span class="btn-icon">🔗</span> Add a URL
+      </button>
+      <button type="button" class="btn btn-ghost" id="btn-add-paste">
+        <span class="btn-icon">☰</span> Paste multiple URLs
+      </button>
+      <input type="file" id="file-input" accept="application/pdf" multiple hidden />
+    </section>
+
+    <section class="ledger-wrap">
+      <div class="ledger-header">
+        <span>Binding queue</span>
+        <span class="ledger-hint">Drag the handle to reorder · click a title to rename it</span>
+      </div>
+
+      <ol id="queue" class="queue"></ol>
+
+      <div id="empty-state" class="empty-state">
+        <p>Nothing in the bindery yet.</p>
+        <p class="empty-state-sub">Add a few PDFs above to start a binding queue.</p>
+      </div>
+    </section>
+
+    <section class="bind-bar">
+      <label class="filename-field">
+        <span>Output filename</span>
+        <input type="text" id="output-filename" value="merged.pdf" autocomplete="off" spellcheck="false" />
+      </label>
+      <button type="button" class="btn btn-bind" id="btn-bind" disabled>
+        <span id="bind-label">Bind documents</span>
+      </button>
+    </section>
+
+    <p id="status-line" class="status-line" aria-live="polite"></p>
+
+  </main>
+
+  <footer class="colophon">Runs entirely on the server you deploy it to — files are processed in memory and never stored.</footer>
+
+</div>
+
+<!-- Add URL dialog -->
+<dialog id="dialog-url" class="dialog">
+  <form method="dialog" id="form-url">
+    <h2>Add a URL</h2>
+    <p class="dialog-hint">Link directly to a PDF file.</p>
+    <input type="url" id="input-url" placeholder="https://example.com/document.pdf" required autocomplete="off" />
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Paste multiple URLs dialog -->
+<dialog id="dialog-paste" class="dialog">
+  <form method="dialog" id="form-paste">
+    <h2>Paste multiple URLs</h2>
+    <p class="dialog-hint">One PDF link per line.</p>
+    <textarea id="input-paste" rows="10" placeholder="https://example.com/one.pdf&#10;https://example.com/two.pdf"></textarea>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">Add all</button>
+    </div>
+  </form>
+</dialog>
+
+<template id="row-template">
+  <li class="row" draggable="true">
+    <span class="row-handle" aria-hidden="true">⠿</span>
+    <span class="row-index">No. 000</span>
+    <div class="row-main">
+      <input class="row-title" type="text" value="" spellcheck="false" />
+      <span class="row-source"></span>
+    </div>
+    <span class="row-status"></span>
+    <button type="button" class="row-remove" aria-label="Remove">✕</button>
+  </li>
+</template>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
