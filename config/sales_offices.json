@@ -1,0 +1,12 @@
+[
+  {
+    "name": "REPLACE ME — e.g. Trane Chicago",
+    "address_lines": ["123 Example Ave, Suite 100", "Chicago, IL 60601"],
+    "phone": "(312) 555-0100"
+  },
+  {
+    "name": "REPLACE ME — e.g. Trane Milwaukee",
+    "address_lines": ["456 Example St", "Milwaukee, WI 53202"],
+    "phone": "(414) 555-0100"
+  }
+]

@@ -31,8 +31,10 @@ from __future__ import annotations
 
 import io
 import ipaddress
+import json
 import socket
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -41,6 +43,7 @@ from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 from werkzeug.exceptions import HTTPException
@@ -53,7 +56,9 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
 
 MAX_SOURCE_BYTES = 50 * 1024 * 1024  # per PDF, local or remote
+MAX_LOGO_BYTES = 5 * 1024 * 1024
 MAX_ITEMS = 60
+MAX_FIELD_LEN = 200
 DOWNLOAD_CHUNK = 64 * 1024
 REQUEST_TIMEOUT = 15
 
@@ -62,6 +67,13 @@ LINE_HEIGHT = 0.3 * inch
 FIRST_PAGE_TOP = letter[1] - 1.5 * inch
 CONT_PAGE_TOP = letter[1] - 1.15 * inch
 BOTTOM_MARGIN = inch
+
+SALES_OFFICES_PATH = Path(__file__).parent / "config" / "sales_offices.json"
+
+# Cover-page accent color. This is a reasonable professional blue, not a
+# verified Trane brand color — swap the RGB tuple below to match your
+# actual brand guidelines.
+COVER_ACCENT_RGB = (0.03, 0.28, 0.55)
 
 
 class BinderyError(ValueError):
@@ -220,6 +232,161 @@ def build_toc_pages(entries: list[tuple[str, int]]) -> list:
 
 
 # --------------------------------------------------------------------------
+# Sales offices
+# --------------------------------------------------------------------------
+
+def load_sales_offices() -> list[dict]:
+    """Read the editable office directory from config/sales_offices.json."""
+    try:
+        with open(SALES_OFFICES_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+# --------------------------------------------------------------------------
+# Cover page
+# --------------------------------------------------------------------------
+
+def _s(value, max_len: int = MAX_FIELD_LEN) -> str:
+    """Coerce a cover-field value to a trimmed, length-capped string."""
+    return str(value or "").strip()[:max_len]
+
+
+def _draw_wrapped_lines(pdf: canvas.Canvas, lines: list[str], x: float, y: float,
+                         font: str, size: float, leading: float) -> float:
+    for line in lines:
+        if line:
+            pdf.drawString(x, y, line)
+        y -= leading
+    return y
+
+
+def build_cover_page(cover: dict, logo_bytes: bytes | None):
+    """Render a single generated cover page from structured fields."""
+    width, height = letter
+    left = inch
+    right = width - inch
+    content_width = right - left
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+
+    y = height - inch
+
+    # Logo, if provided — scaled to fit within a header box, aspect preserved.
+    if logo_bytes:
+        try:
+            img = ImageReader(io.BytesIO(logo_bytes))
+            iw, ih = img.getSize()
+            max_w, max_h = 2.6 * inch, 1.0 * inch
+            scale = min(max_w / iw, max_h / ih)
+            draw_w, draw_h = iw * scale, ih * scale
+            pdf.drawImage(
+                img, (width - draw_w) / 2.0, y - draw_h,
+                width=draw_w, height=draw_h, mask="auto",
+            )
+            y -= draw_h + 0.35 * inch
+        except Exception:
+            # A bad/corrupt logo shouldn't block the whole merge — skip it.
+            y -= 0.1 * inch
+
+    # Title
+    pdf.setFont("Helvetica-Bold", 20)
+    pdf.setFillColorRGB(*COVER_ACCENT_RGB)
+    pdf.drawCentredString(width / 2.0, y, _s(cover.get("title")) or "Controls Datasheet Submittal")
+    pdf.setFillColorRGB(0, 0, 0)
+    y -= 0.3 * inch
+
+    pdf.setStrokeColorRGB(*COVER_ACCENT_RGB)
+    pdf.setLineWidth(1.5)
+    pdf.line(left, y, right, y)
+    y -= 0.4 * inch
+
+    # Prepared For
+    prepared_for = cover.get("prepared_for") or {}
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(left, y, "Prepared For")
+    y -= 0.22 * inch
+    pdf.setFont("Helvetica", 10.5)
+    y = _draw_wrapped_lines(pdf, [
+        f"Company: {v}" if (v := _s(prepared_for.get("company"))) else "",
+        f"Sold To: {v}" if (v := _s(prepared_for.get("sold_to"))) else "",
+        f"Customer Project Number: {v}" if (v := _s(prepared_for.get("project_number"))) else "",
+    ], left, y, "Helvetica", 10.5, 0.2 * inch)
+    y -= 0.15 * inch
+
+    # Project info
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(left, y, "Project Information")
+    y -= 0.22 * inch
+    pdf.setFont("Helvetica", 10.5)
+    y = _draw_wrapped_lines(pdf, [
+        f"Project Name: {v}" if (v := _s(cover.get("project_name"))) else "",
+        f"Project Location: {v}" if (v := _s(cover.get("project_location"))) else "",
+        f"Date: {v}" if (v := _s(cover.get("date"))) else "",
+    ], left, y, "Helvetica", 10.5, 0.2 * inch)
+    y -= 0.35 * inch
+
+    # Two columns near the bottom: contracting team / sales office
+    col_y_start = y
+    col1_x = left
+    col2_x = left + content_width / 2.0 + 0.2 * inch
+
+    contracting = cover.get("contracting_team") or {}
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(col1_x, col_y_start, "Trane Contracting Team")
+    pdf.setFont("Helvetica", 10.5)
+    _draw_wrapped_lines(pdf, [
+        _s(contracting.get("name")),
+        _s(contracting.get("phone")),
+        _s(contracting.get("email")),
+    ], col1_x, col_y_start - 0.22 * inch, "Helvetica", 10.5, 0.2 * inch)
+
+    office = cover.get("sales_office") or {}
+    office_address_lines = [
+        _s(line) for line in str(office.get("address", "")).split("\n") if _s(line)
+    ]
+    pdf.setFont("Helvetica-Bold", 11)
+    pdf.drawString(col2_x, col_y_start, "Trane Sales Office")
+    pdf.setFont("Helvetica", 10.5)
+    office_lines = [_s(office.get("name")), *office_address_lines, _s(office.get("phone"))]
+    _draw_wrapped_lines(pdf, office_lines, col2_x, col_y_start - 0.22 * inch, "Helvetica", 10.5, 0.2 * inch)
+
+    pdf.showPage()
+    pdf.save()
+    buffer.seek(0)
+    return list(PdfReader(buffer).pages)
+
+
+def build_cover_pages(cover: dict | None, cover_file_storage, cover_logo_storage) -> list:
+    """Resolve the cover-page config into a list of pypdf pages (possibly empty)."""
+    if not cover:
+        return []
+
+    mode = cover.get("mode")
+
+    if mode == "upload":
+        if cover_file_storage is None:
+            raise BinderyError("Choose a cover PDF to upload, or switch to 'None'.")
+        data = cover_file_storage.read()
+        if len(data) > MAX_SOURCE_BYTES:
+            raise BinderyError("The cover PDF is larger than the 50 MB limit.")
+        reader = read_pdf(data, cover_file_storage.filename or "Cover page")
+        return list(reader.pages)
+
+    if mode == "generate":
+        logo_bytes = None
+        if cover_logo_storage is not None:
+            logo_bytes = cover_logo_storage.read()
+            if len(logo_bytes) > MAX_LOGO_BYTES:
+                raise BinderyError("The logo image is larger than the 5 MB limit.")
+        return build_cover_page(cover, logo_bytes)
+
+    return []
+
+
+# --------------------------------------------------------------------------
 # Page numbering
 # --------------------------------------------------------------------------
 
@@ -277,7 +444,12 @@ def parse_meta(raw_meta: list) -> list[MergeItem]:
     return items
 
 
-def perform_merge(items: list[MergeItem], files_by_id: dict) -> tuple[bytes, list[str]]:
+def perform_merge(
+    items: list[MergeItem],
+    files_by_id: dict,
+    cover_pages: list | None = None,
+) -> tuple[bytes, list[str]]:
+    cover_pages = cover_pages or []
     warnings: list[str] = []
     readers: list[PdfReader] = []
     titles: list[str] = []
@@ -312,22 +484,25 @@ def perform_merge(items: list[MergeItem], files_by_id: dict) -> tuple[bytes, lis
     else:
         toc_page_count = 1 + -(-(n - entries_per_first_page) // entries_per_cont_page)
 
+    cover_page_count = len(cover_pages)
     toc_entries = []
-    running_page = toc_page_count + 1
+    running_page = cover_page_count + toc_page_count + 1
     for reader, title in zip(readers, titles):
         toc_entries.append((title, running_page))
         running_page += len(reader.pages)
-    total_content_pages = running_page - (toc_page_count + 1)
+    total_content_pages = running_page - (cover_page_count + toc_page_count + 1)
 
-    # Pass 2: assemble.
+    # Pass 2: assemble — cover page(s), then TOC, then content.
     writer = PdfWriter()
+    for page in cover_pages:
+        writer.add_page(page)
     for toc_page in build_toc_pages(toc_entries):
         writer.add_page(toc_page)
     for reader in readers:
         for page in reader.pages:
             writer.add_page(page)
 
-    stamp_page_numbers(writer, start_index=toc_page_count, total=total_content_pages)
+    stamp_page_numbers(writer, start_index=cover_page_count + toc_page_count, total=total_content_pages)
 
     out = io.BytesIO()
     writer.write(out)
@@ -369,6 +544,11 @@ def api_inspect():
     return jsonify(title=title, pages=len(reader.pages))
 
 
+@app.get("/api/sales-offices")
+def api_sales_offices():
+    return jsonify(offices=load_sales_offices())
+
+
 @app.post("/api/check-url")
 def api_check_url():
     """Cheap validation for a pasted URL: HEAD only, no download."""
@@ -396,12 +576,13 @@ def api_check_url():
 
 @app.post("/api/merge")
 def api_merge():
-    import json
-
     raw_meta = request.form.get("meta", "")
     try:
-        meta = json.loads(raw_meta)
-        items = parse_meta(meta)
+        parsed = json.loads(raw_meta)
+        if not isinstance(parsed, dict):
+            raise BinderyError("Malformed request.")
+        cover = parsed.get("cover")
+        items = parse_meta(parsed.get("items", []))
     except (json.JSONDecodeError, BinderyError) as exc:
         return jsonify(error=str(exc)), 400
 
@@ -416,7 +597,12 @@ def api_merge():
         filename += ".pdf"
 
     try:
-        pdf_bytes, warnings = perform_merge(items, files_by_id)
+        cover_pages = build_cover_pages(
+            cover,
+            request.files.get("cover_file"),
+            request.files.get("cover_logo"),
+        )
+        pdf_bytes, warnings = perform_merge(items, files_by_id, cover_pages)
     except BinderyError as exc:
         return jsonify(error=str(exc)), 400
     except Exception as exc:  # noqa: BLE001 - surface a clean message, not a trace

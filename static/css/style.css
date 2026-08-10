@@ -157,6 +157,111 @@ body {
   white-space: pre-line;
 }
 
+/* ---------- Cover page ---------- */
+
+.cover-wrap {
+  background: var(--bg-raise);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+.cover-body {
+  padding: 16px 18px 20px;
+}
+
+.cover-mode-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.cover-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.cover-mode-option input {
+  accent-color: var(--gold);
+}
+
+.cover-panel {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.cover-file-name {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  margin-left: 10px;
+}
+
+.cover-logo-row {
+  display: flex;
+  align-items: center;
+}
+
+.cover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.cover-field label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.cover-field input[type="text"],
+.cover-field input[type="date"],
+.cover-field select,
+.cover-field textarea {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.cover-field input:focus,
+.cover-field select:focus,
+.cover-field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.cover-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 4px 16px;
+}
+
+.cover-subhead {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 18px 0 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
 /* ---------- Ledger ---------- */
 
 .ledger-wrap {

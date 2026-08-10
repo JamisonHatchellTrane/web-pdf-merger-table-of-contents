@@ -46,6 +46,121 @@
       <input type="file" id="file-input" accept="application/pdf" multiple hidden />
     </section>
 
+    <section class="cover-wrap">
+      <div class="ledger-header">
+        <span>Cover page</span>
+        <span class="ledger-hint">Optional — added before the table of contents</span>
+      </div>
+
+      <div class="cover-body">
+        <div class="cover-mode-row" role="radiogroup" aria-label="Cover page mode">
+          <label class="cover-mode-option">
+            <input type="radio" name="cover-mode" value="none" checked />
+            <span>None</span>
+          </label>
+          <label class="cover-mode-option">
+            <input type="radio" name="cover-mode" value="upload" />
+            <span>Upload a PDF</span>
+          </label>
+          <label class="cover-mode-option">
+            <input type="radio" name="cover-mode" value="generate" />
+            <span>Generate a cover sheet</span>
+          </label>
+        </div>
+
+        <div id="cover-upload-panel" class="cover-panel" hidden>
+          <button type="button" class="btn btn-ghost" id="btn-cover-upload">
+            <span class="btn-icon">＋</span> Choose cover PDF
+          </button>
+          <span id="cover-upload-name" class="cover-file-name"></span>
+          <input type="file" id="cover-file-input" accept="application/pdf" hidden />
+        </div>
+
+        <div id="cover-generate-panel" class="cover-panel" hidden>
+
+          <div class="cover-field cover-field-logo">
+            <label for="cover-logo-input">Logo (optional)</label>
+            <div class="cover-logo-row">
+              <button type="button" class="btn btn-ghost" id="btn-cover-logo">Choose image</button>
+              <span id="cover-logo-name" class="cover-file-name"></span>
+              <input type="file" id="cover-logo-input" accept="image/png,image/jpeg" hidden />
+            </div>
+          </div>
+
+          <div class="cover-field">
+            <label for="cover-title">Title</label>
+            <input type="text" id="cover-title" value="Controls Datasheet Submittal" />
+          </div>
+
+          <div class="cover-grid">
+            <div class="cover-field">
+              <label for="cover-company">Prepared For — Company Name</label>
+              <input type="text" id="cover-company" placeholder="Acme Corp" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-sold-to">Sold To</label>
+              <input type="text" id="cover-sold-to" placeholder="Acme Corp HQ" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-project-number">Customer Project Number</label>
+              <input type="text" id="cover-project-number" placeholder="CPN-4521" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-date">Date</label>
+              <input type="date" id="cover-date" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-project-name">Project Name</label>
+              <input type="text" id="cover-project-name" placeholder="Downtown Office Retrofit" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-project-location">Project Location</label>
+              <input type="text" id="cover-project-location" placeholder="Chicago, IL" />
+            </div>
+          </div>
+
+          <div class="cover-subhead">Trane Contracting Team</div>
+          <div class="cover-grid">
+            <div class="cover-field">
+              <label for="cover-team-name">Name</label>
+              <input type="text" id="cover-team-name" placeholder="Jane Doe" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-team-phone">Phone</label>
+              <input type="text" id="cover-team-phone" placeholder="(555) 111-2222" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-team-email">Email</label>
+              <input type="text" id="cover-team-email" placeholder="jane.doe@trane.com" />
+            </div>
+          </div>
+
+          <div class="cover-subhead">Trane Sales Office</div>
+          <div class="cover-field">
+            <label for="cover-office-select">Select office</label>
+            <select id="cover-office-select">
+              <option value="">Custom / not listed</option>
+            </select>
+          </div>
+          <div class="cover-grid">
+            <div class="cover-field">
+              <label for="cover-office-name">Office name</label>
+              <input type="text" id="cover-office-name" placeholder="Trane Chicago" />
+            </div>
+            <div class="cover-field">
+              <label for="cover-office-phone">Office phone</label>
+              <input type="text" id="cover-office-phone" placeholder="(312) 555-0100" />
+            </div>
+          </div>
+          <div class="cover-field">
+            <label for="cover-office-address">Office address</label>
+            <textarea id="cover-office-address" rows="2" placeholder="123 Example Ave, Suite 100&#10;Chicago, IL 60601"></textarea>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
     <section class="ledger-wrap">
       <div class="ledger-header">
         <span>Binding queue</span>

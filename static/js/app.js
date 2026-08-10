@@ -7,6 +7,9 @@
   /** @type {Item[]} */
   let items = [];
   let dragId = null;
+  let coverFile = null;
+  let coverLogoFile = null;
+  let salesOffices = [];
 
   const queueEl = document.getElementById("queue");
   const emptyStateEl = document.getElementById("empty-state");
@@ -192,15 +195,23 @@
     const validItems = items.filter((i) => i.status !== "error");
     if (validItems.length === 0) return;
 
+    if (currentCoverMode() === "upload" && !coverFile) {
+      showBanner("Choose a cover PDF to upload, or switch the cover page to 'None'.");
+      return;
+    }
+
     bindBtn.disabled = true;
     setStatus("Binding documents…");
 
-    const meta = validItems.map((i) => ({
-      id: i.id,
-      kind: i.kind,
-      title: i.title,
-      url: i.kind === "url" ? i.url : undefined,
-    }));
+    const meta = {
+      cover: buildCoverMeta(),
+      items: validItems.map((i) => ({
+        id: i.id,
+        kind: i.kind,
+        title: i.title,
+        url: i.kind === "url" ? i.url : undefined,
+      })),
+    };
 
     const form = new FormData();
     form.append("meta", JSON.stringify(meta));
@@ -208,6 +219,12 @@
     validItems.forEach((i) => {
       if (i.kind === "file") form.append(`file_${i.id}`, i.file);
     });
+    if (meta.cover.mode === "upload" && coverFile) {
+      form.append("cover_file", coverFile);
+    }
+    if (meta.cover.mode === "generate" && coverLogoFile) {
+      form.append("cover_logo", coverLogoFile);
+    }
 
     try {
       const res = await fetch("/api/merge", { method: "POST", body: form });
@@ -229,6 +246,98 @@
     } finally {
       bindBtn.disabled = items.length === 0;
     }
+  }
+
+  // ---------------------------------------------------------------- cover page
+
+  function currentCoverMode() {
+    const checked = document.querySelector('input[name="cover-mode"]:checked');
+    return checked ? checked.value : "none";
+  }
+
+  function updateCoverPanels() {
+    const mode = currentCoverMode();
+    document.getElementById("cover-upload-panel").hidden = mode !== "upload";
+    document.getElementById("cover-generate-panel").hidden = mode !== "generate";
+  }
+
+  document.querySelectorAll('input[name="cover-mode"]').forEach((el) => {
+    el.addEventListener("change", updateCoverPanels);
+  });
+
+  document.getElementById("btn-cover-upload").addEventListener("click", () => {
+    document.getElementById("cover-file-input").click();
+  });
+  document.getElementById("cover-file-input").addEventListener("change", (e) => {
+    coverFile = e.target.files[0] || null;
+    document.getElementById("cover-upload-name").textContent = coverFile ? coverFile.name : "";
+  });
+
+  document.getElementById("btn-cover-logo").addEventListener("click", () => {
+    document.getElementById("cover-logo-input").click();
+  });
+  document.getElementById("cover-logo-input").addEventListener("change", (e) => {
+    coverLogoFile = e.target.files[0] || null;
+    document.getElementById("cover-logo-name").textContent = coverLogoFile ? coverLogoFile.name : "";
+  });
+
+  async function loadSalesOffices() {
+    try {
+      const res = await fetch("/api/sales-offices");
+      const data = await res.json();
+      salesOffices = data.offices || [];
+      const select = document.getElementById("cover-office-select");
+      salesOffices.forEach((office, index) => {
+        const opt = document.createElement("option");
+        opt.value = String(index);
+        opt.textContent = office.name;
+        select.appendChild(opt);
+      });
+    } catch {
+      // Non-fatal — the dropdown just stays at "Custom / not listed".
+    }
+  }
+
+  document.getElementById("cover-office-select").addEventListener("change", (e) => {
+    const office = salesOffices[Number(e.target.value)];
+    if (!office) return;
+    document.getElementById("cover-office-name").value = office.name || "";
+    document.getElementById("cover-office-phone").value = office.phone || "";
+    document.getElementById("cover-office-address").value = (office.address_lines || []).join("\n");
+  });
+
+  function todayIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  document.getElementById("cover-date").value = todayIso();
+
+  function buildCoverMeta() {
+    const mode = currentCoverMode();
+    if (mode === "none") return { mode: "none" };
+    if (mode === "upload") return { mode: "upload" };
+    return {
+      mode: "generate",
+      title: document.getElementById("cover-title").value,
+      contracting_team: {
+        name: document.getElementById("cover-team-name").value,
+        phone: document.getElementById("cover-team-phone").value,
+        email: document.getElementById("cover-team-email").value,
+      },
+      sales_office: {
+        name: document.getElementById("cover-office-name").value,
+        address: document.getElementById("cover-office-address").value,
+        phone: document.getElementById("cover-office-phone").value,
+      },
+      prepared_for: {
+        company: document.getElementById("cover-company").value,
+        sold_to: document.getElementById("cover-sold-to").value,
+        project_number: document.getElementById("cover-project-number").value,
+      },
+      project_name: document.getElementById("cover-project-name").value,
+      project_location: document.getElementById("cover-project-location").value,
+      date: document.getElementById("cover-date").value,
+    };
   }
 
   // ---------------------------------------------------------------- wiring
@@ -274,4 +383,5 @@
   bindBtn.addEventListener("click", bindAll);
 
   render();
+  loadSalesOffices();
 })();
