@@ -1,12 +1,77 @@
 [
   {
-    "name": "REPLACE ME — e.g. Trane Chicago",
-    "address_lines": ["123 Example Ave, Suite 100", "Chicago, IL 60601"],
-    "phone": "(312) 555-0100"
+    "name": "Trane Commercial – Atlanta Office",
+    "address_lines": ["4000 Dekalb Technology Pkwy, Suite 400", "Atlanta, GA 30340"],
+    "phone": "(770) 452-1919"
   },
   {
-    "name": "REPLACE ME — e.g. Trane Milwaukee",
-    "address_lines": ["456 Example St", "Milwaukee, WI 53202"],
-    "phone": "(414) 555-0100"
+    "name": "Trane Commercial – Boston Office",
+    "address_lines": ["100 River Ridge Drive, Suite 101", "Norwood, MA 02062"],
+    "phone": "(781) 551-8600"
+  },
+  {
+    "name": "Trane Commercial – Chicago Office",
+    "address_lines": ["7100 Madison St.", "Willowbrook, IL 60527"],
+    "phone": "(630) 655-1000"
+  },
+  {
+    "name": "Trane Commercial – Dallas Office",
+    "address_lines": ["4833 Lyndon B Johnson Fwy, Suite 1000", "Dallas, TX 75244"],
+    "phone": "(972) 980-0800"
+  },
+  {
+    "name": "Trane Commercial – Denver Office",
+    "address_lines": ["11121 E. 51st Avenue", "Denver, CO 80239"],
+    "phone": "(303) 371-1661"
+  },
+  {
+    "name": "Trane Commercial – Houston Office",
+    "address_lines": ["6025 Theall Road", "Houston, TX 77066"],
+    "phone": "(713) 939-8440"
+  },
+  {
+    "name": "Trane Commercial – Los Angeles Office",
+    "address_lines": ["3840 Watseka Avenue", "Los Angeles, CA 90034"],
+    "phone": "(310) 836-9551"
+  },
+  {
+    "name": "Trane Commercial – Minneapolis Office",
+    "address_lines": ["4833 White Bear Parkway", "White Bear Lake, MN 55110"],
+    "phone": "(651) 407-3900"
+  },
+  {
+    "name": "Trane Commercial – New York City Office",
+    "address_lines": ["45-18 Court Square, Suite 403", "Long Island City, NY 11101"],
+    "phone": "(718) 784-1300"
+  },
+  {
+    "name": "Trane Commercial – Orlando Office",
+    "address_lines": ["2301 Lucien Way, Suite 430", "Maitland, FL 32751"],
+    "phone": "(407) 660-1111"
+  },
+  {
+    "name": "Trane Commercial – Philadelphia Office",
+    "address_lines": ["211 Welsh Pool Road, Suite 100", "Exton, PA 19341"],
+    "phone": "(610) 363-9400"
+  },
+  {
+    "name": "Trane Commercial – Phoenix Office",
+    "address_lines": ["2340 W. Broadway Road, Suite 101", "Mesa, AZ 85202"],
+    "phone": "(480) 894-5656"
+  },
+  {
+    "name": "Trane Commercial – San Francisco Bay Area Office",
+    "address_lines": ["2633 Camino Ramon, Suite 525", "San Ramon, CA 94583"],
+    "phone": "(925) 866-9200"
+  },
+  {
+    "name": "Trane Commercial – Seattle Office",
+    "address_lines": ["2025 5th Avenue, Suite 900", "Seattle, WA 98121"],
+    "phone": "(206) 443-9900"
+  },
+  {
+    "name": "Trane Commercial – St. Louis Office",
+    "address_lines": ["101 Matrix Commons Drive", "Fenton, MO 63026"],
+    "phone": "(636) 305-6000"
   }
 ]
